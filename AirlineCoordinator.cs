@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace FlightBookingAppV1
 {
@@ -35,6 +33,10 @@ namespace FlightBookingAppV1
             {
                 Console.WriteLine(customer);
             }
+            if (customers.Count == 0)
+            {
+                Console.WriteLine("No customers found.");
+            }
         }
 
         public void DeleteCustomer(int customerId)
@@ -43,9 +45,18 @@ namespace FlightBookingAppV1
             SaveCustomers();
         }
 
-        public void AddFlight(int flightNumber, string origin, string destination, int maxSeats)
+        public Customer GetCustomerById(int customerId)
         {
-            Flight flight = new Flight(flightNumber, origin, destination, maxSeats);
+            if (customers.Count == 0)
+            {
+                LoadCustomers();
+            }
+            return customers.FirstOrDefault(c => c.CustomerId == customerId);
+        }
+
+        public void AddFlight(string flightNumber, string origin, string destination, int maxSeats)
+        {
+            Flight flight = new Flight(flightNumber.ToUpper(), origin.ToUpper(), destination.ToUpper(), maxSeats);
             flights.Add(flight);
             SaveFlights();
         }
@@ -55,34 +66,60 @@ namespace FlightBookingAppV1
             LoadFlights();
             foreach (Flight flight in flights)
             {
-                Console.WriteLine(flight);
+
+                Console.WriteLine(flight.GetFlightDetails());
+            }
+            if (flights.Count == 0)
+            {
+                Console.WriteLine("No flights found.");
             }
         }
 
-        public void ViewFlight(int flightNumber)
+        public Flight GetFlightByNumber(string flightNumber)
         {
-            LoadFlights();
-            Flight flight = flights.Find(f => f.FlightNumber == flightNumber);
-            if (flight != null)
+            if (flights.Count == 0)
             {
-                Console.WriteLine(flight);
+                LoadFlights();
             }
-            else
-            {
-                Console.WriteLine("Flight not found.");
-            }
+            return flights.FirstOrDefault(f => f.FlightNumber.Trim() == flightNumber.ToUpper().Trim());
         }
 
-        public void DeleteFlight(int flightNumber)
+        public void DeleteFlight(string flightNumber)
         {
             flights.RemoveAll(f => f.FlightNumber == flightNumber);
             SaveFlights();
         }
-
-        public void AddBooking(int bookingId, int customerId, int flightNumber)
+       public bool checkBooking(int bookingId)
         {
-            Booking booking = new Booking(bookingId, customerId, flightNumber);
-            bookings.Add(booking);
+            LoadBookings();
+            foreach (Booking booking in bookings)
+            {
+                if (booking.BookingId == bookingId)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public void AddBooking(Booking booking)
+        {
+            bool bookingExists = checkBooking(booking.BookingId);
+            if (bookingExists)
+            {
+                foreach (Booking b in bookings)
+                {
+                    if (b.BookingId == booking.BookingId)
+                    {
+                        b.Flights.AddRange(booking.Flights);
+                    }
+                }
+            }
+            else
+            {
+                bookings.Add(booking);
+            }
+            
             SaveBookings();
         }
 
@@ -151,7 +188,7 @@ namespace FlightBookingAppV1
                     while ((line = reader.ReadLine()) != null)
                     {
                         string[] parts = line.Split(',');
-                        flights.Add(new Flight(int.Parse(parts[0]), parts[1], parts[2], int.Parse(parts[3])));
+                        flights.Add(new Flight(parts[0], parts[1], parts[2], int.Parse(parts[3])));
                     }
                 }
             }
@@ -163,7 +200,8 @@ namespace FlightBookingAppV1
             {
                 foreach (Booking booking in bookings)
                 {
-                    writer.WriteLine(booking.ToString());
+                    string flightsInfo = string.Join("|", booking.Flights.Select(f => f.FlightNumber));
+                    writer.WriteLine($"{booking.BookingId},{booking.Customer.CustomerId},{flightsInfo}");
                 }
             }
         }
@@ -171,7 +209,8 @@ namespace FlightBookingAppV1
         private void LoadBookings()
         {
             bookings.Clear();
-            
+            LoadCustomers();
+            LoadFlights();
             if (File.Exists("bookings.txt"))
             {
                 using (StreamReader reader = new StreamReader("bookings.txt"))
@@ -179,8 +218,22 @@ namespace FlightBookingAppV1
                     string line;
                     while ((line = reader.ReadLine()) != null)
                     {
-                        string[] parts = line.Split(',');
-                        bookings.Add(new Booking(int.Parse(parts[0]), int.Parse(parts[1]), int.Parse(parts[2])));
+                        string[] partsOne = line.Split(',');
+                        int bookingId = int.Parse(partsOne[0]);
+                        Customer customer = GetCustomerById(int.Parse(partsOne[1]));
+                    
+                        List<Flight> flightsArray = new List<Flight>();
+                        string[] flightNumbers = partsOne[2].Split('|');
+
+                        foreach (string flightNumber in flightNumbers)
+                        {
+                            Flight flight = GetFlightByNumber(flightNumber);
+                            if (flight != null)
+                            {
+                                flightsArray.Add(flight);
+                            }
+                        } 
+                        bookings.Add(new Booking(bookingId, customer, flightsArray));
                     }
                 }
             }

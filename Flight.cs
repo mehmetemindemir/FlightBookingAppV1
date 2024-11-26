@@ -1,19 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace FlightBookingAppV1
+﻿namespace FlightBookingAppV1
 {
     public class Flight
     {
-        public int FlightNumber { get; set; }
-        public string Origin { get; set; }
-        public string Destination { get; set; }
-        public int MaxSeats { get; set; }
+        public string FlightNumber { get; private set; }
+        public string Origin { get; private set; }
+        public string Destination { get; private set; }
+        public int MaxSeats { get; private set; }
 
-        public Flight(int flightNumber, string origin, string destination, int maxSeats)
+        public Flight(string flightNumber, string origin, string destination, int maxSeats)
         {
             FlightNumber = flightNumber;
             Origin = origin;
@@ -25,5 +19,10 @@ namespace FlightBookingAppV1
         {
             return $"{FlightNumber},{Origin},{Destination},{MaxSeats}";
         }
+        public string GetFlightDetails()
+        {
+            return $" {FlightNumber} - {Origin} to {Destination} ({MaxSeats} seats)";
+        }
+
     }
 }

@@ -1,17 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace FlightBookingAppV1
+﻿namespace FlightBookingAppV1
 {
     public class Customer
     {
-        public int CustomerId { get; set; }
-        public string FirstName { get; set; }
-        public string LastName { get; set; }
-        public string Phone { get; set; }
+        public int CustomerId { get; private set; }
+        public string FirstName { get; private set; }
+        public string LastName { get; private set; }
+        public string Phone { get; private set; }
 
         public Customer(int customerId, string firstName, string lastName, string phone)
         {
@@ -24,6 +18,10 @@ namespace FlightBookingAppV1
         public override string ToString()
         {
             return $"{CustomerId},{FirstName},{LastName},{Phone}";
+        }
+        public string GetCustomerDetails()
+        {
+            return $"{CustomerId} - {FirstName} {LastName} ({Phone})";
         }
     }
 }
